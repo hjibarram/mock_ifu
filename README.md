@@ -1,6 +1,8 @@
 # mock_ifu
-Tool for mocking IFU observations from hydrodynamical n-body simulations
+A tool for mocking IFU observations from hydrodynamical n-body simulations
 
-Usage:
+#Usage:
 
-With Docker:
+#With Docker:
+
+docker pull hjibarram/ifu_mocks
