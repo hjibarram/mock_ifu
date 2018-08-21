@@ -1,13 +1,13 @@
 # mock_ifu
 A tool for mocking IFU observations from hydrodynamical n-body simulations
-#USAGE:
-#Running Using Docker:
+# USAGE:
+# Running Using Docker:
 docker pull hjibarram/ifu_mocks
 docker run -p 8000:8000 -v `pwd`/dir_outputs:/dir_outputs hjibarram/ifu_mocks id_name;base_name;dir_outputs;mod;type_ifu file_sim_stars;file_sim_gas fib_n;angle;SN;Flux_lim;psf n_pix;r_0;fov_p;fov;cam ex1,ey1,ez1;ex2,ey2,ez2;ex2,ey3,ez3 teplate1;template2;template3;template4 Om,Ol,ho redo
-#Running Using Python:
+# Running Using Python:
 python mocks.py id_name;base_name;dir_outputs;mod;type_ifu file_sim_stars;file_sim_gas fib_n;angle;SN;Flux_lim;psf n_pix;r_0;fov_p;fov;cam ex1,ey1,ez1;ex2,ey2,ez2;ex2,ey3,ez3 teplate1;template2;template3;template4 Om,Ol,ho redo
 
-#key words:
+# key words:
 id_name = name of the mock
 base_name = base name of the mock: base_name-id_name
 dir_outputs = output directory
@@ -19,18 +19,18 @@ fib_n = number of fibers per octagon size
 angle = angle between the reference vector e1 and the observer
 SN = Signal to noise ratio
 
-#Running with Configuration file:
-docker run -p 8000:8000 -v `pwd`/dir_outputs:/dir_outputs hjibarram/ifu_mocks Config_name:dir_outputs/config_name
+# Running with Configuration file:
+docker run -p 8000:8000 -v '`pwd`'/dir_outputs:/dir_outputs hjibarram/ifu_mocks Config_name:dir_outputs/config_name
 python mocks.py Config_name:config_name
 You must put Config_name: before config_name
 config_name = name of the configuration file
 
-#Running with DEFAULT VALUES:
+# Running with DEFAULT VALUES:
 docker run -p 8000:8000 hjibarram/ifu_mocks Default
 python mocks.py Default
 
 
-#Default configuration file example:
+# Default configuration file example:
 
 basename     artsp8-
 typef1       MaNGA
