@@ -1,1 +1,7 @@
+numpy
+scipy
+matplotlib
+astropy
+cosmolopy
 pyfits
+Pillow
