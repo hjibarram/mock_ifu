@@ -642,4 +642,4 @@ if conf_t == 1:
         sys.exit()
 file_out='mock_mass_ill_0.out'
 file_out_f='mock_mass_ill.out'
-#sifu.mock_sp(fib_n,ang,modt=modt,template_1=template_1,template_2=template_2,template_3=template_3,template=template_0,n_pix=n_pix,fov_p=fov_p,fov=fov,rx=rx,Om=Om,Lam=Lam,ho=ho,cam=cam,vx=vx,vy=vy,vz=vz,base_name=basename,typef1=typef1,id1=id1,psf=psf,redo=redo,SN=SN,Fluxm=Fluxm,dir1=dir1,file_red=file_red,file_gas=file_gas,file_out=file_out,file_out_f=file_out_f)
+sifu.mock_sp(fib_n,ang,modt=modt,template_1=template_1,template_2=template_2,template_3=template_3,template=template_0,n_pix=n_pix,fov_p=fov_p,fov=fov,rx=rx,Om=Om,Lam=Lam,ho=ho,cam=cam,vx=vx,vy=vy,vz=vz,base_name=basename,typef1=typef1,id1=id1,psf=psf,redo=redo,SN=SN,Fluxm=Fluxm,dir1=dir1,file_red=file_red,file_gas=file_gas,file_out=file_out,file_out_f=file_out_f)
