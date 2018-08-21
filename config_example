@@ -1,0 +1,30 @@
+basename   artsp8-
+typef1     MaNGA
+id1        A-0
+# Use dir1   dir_outputs when runing with docker:
+# docker run -p 8000:8000 -v `pwd`/dir_outputs:/dir_outputs hjibarram/ifu_mocks Config_name:dir_outputs/config_name
+dir1       ../
+modt       1
+file_red   sp8/star_out_0.dat
+file_gas   sp8/Gas_out_0.dat
+ang        0.0
+fib_n      7
+SN         15.0
+Fluxm      26.83
+psf        1.43
+fov_p      0
+fov        0
+cam        0
+n_pix      440
+rx         142135.5
+vx         [-0.7156755,-0.5130859,0.4738687]
+vy         [0.6984330,-0.5257526,0.4855672]
+vz         [0.0000000,0.6784741,0.7346244]
+template_0 libs/templete_bc03_2.fits
+template_1 libs/gsd61_156.fits
+template_2 libs/templete_gas.fits
+template_3 libs/templete_bc03_5.fits
+Om         0.2726
+Lam        0.7274
+ho         0.704
+redo       0
