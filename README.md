@@ -5,10 +5,11 @@ A tool for mocking IFU observations from hydrodynamical n-body simulations
 
 docker pull hjibarram/ifu_mocks
 
-docker run -p 8000:8000 -v `pwd`/dir_outputs:/dir_outputs hjibarram/ifu_mocks id_name;base_name;dir_outputs;mod;type_ifu file_sim_stars;file_sim_gas fib_n;angle;SN;Flux_lim;psf n_pix;r_0;fov_p;fov;cam ex1,ey1,ez1;ex2,ey2,ez2;ex2,ey3,ez3 teplate1;template2;template3;template4 Om,Ol,ho redo
+docker run -p 8000:8000 -v `pwd`/dir_outputs:/dir_outputs  hjibarram/ifu_mocks 'id_name;base_name;dir_outputs;mod;type_ifu' 'file_sim_stars;file_sim_gas' 'fib_n;angle;SN;Flux_lim;psf' 'n_pix;r_0;fov_p;fov;cam' 'ex1,ey1,ez1;ex2,ey2,ez2;ex2,ey3,ez3' 'teplate1;template2;template3;template4' 'Om,Ol,ho' 'redo'
+
 # Running Using Python:
 
-python mocks.py id_name;base_name;dir_outputs;mod;type_ifu file_sim_stars;file_sim_gas fib_n;angle;SN;Flux_lim;psf n_pix;r_0;fov_p;fov;cam ex1,ey1,ez1;ex2,ey2,ez2;ex2,ey3,ez3 teplate1;template2;template3;template4 Om,Ol,ho redo
+python mocks.py 'id_name;base_name;dir_outputs;mod;type_ifu' 'file_sim_stars;file_sim_gas' 'fib_n;angle;SN;Flux_lim;psf' 'n_pix;r_0;fov_p;fov;cam' 'ex1,ey1,ez1;ex2,ey2,ez2;ex2,ey3,ez3' 'teplate1;template2;template3;template4' 'Om,Ol,ho' 'redo'
 
 # key words:
 
