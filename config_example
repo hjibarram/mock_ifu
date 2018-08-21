@@ -1,7 +1,7 @@
 basename   artsp8-
 typef1     MaNGA
 id1        A-0
-# Use dir1   dir_outputs when runing with docker:
+# Use dir1   dir_outputs when running with docker:
 # docker run -p 8000:8000 -v `pwd`/dir_outputs:/dir_outputs hjibarram/ifu_mocks Config_name:dir_outputs/config_name
 dir1       ../
 modt       1
