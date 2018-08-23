@@ -1543,7 +1543,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                                 Avg_flux=10**(-0.4*Av)*ft_wg+Avg_flux
                                 spect_sfg=spect_sfg+ran.randn(nw_g)*np.median(spect_sfg)*0.01
                                 spect_g=spect_sfg+spect_g    
-                                va_1g.extend([v_rad_g[nt[k]]])
+                                va_1g.extend([v_rad_g[nt_g[k]]])
                                 wf_tg.extend([ft_wg])
                                 wl_tg.extend([lt_wg])                            
                                 #plt.xlim(3400,4000)
