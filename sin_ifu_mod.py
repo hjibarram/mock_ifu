@@ -4935,7 +4935,7 @@ def mock_test(fib_n,typef1="MaNGA",id1='A2-0',psf=0,dir1=''):
     
 
 
-def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/templete_gas.fits",template_3="libs/templete_bc03_5.fits",template="libs/templete_bc03_2.fits",n_pix=440,fov_p=0,fov_m=0,rx=142135.5,Om=0.2726,Lam=0.7274,ho=0.704,cam=0,vx=[-0.7156755,-0.5130859,0.4738687],vy=[0.6984330,-0.5257526,0.4855672],vz=[0.0000000,0.6784741,0.7346244],base_name='artsp8-',typef1="MaNGA",id1='A2-0',psf=0,redo=0,SN=15.0,Fluxm=20.0,dir1='',file_red="sp8/star_out_0.dat",file_gas="sp8/Gas_out_0.dat",file_out='mock_mass_ill_0.out',file_out_f='mock_mass_ill.out'):
+def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/templete_gas.fits",template_3="libs/templete_bc03_5.fits",template="libs/templete_bc03_2.fits",n_pix=440,fov_p=0,fov=0,rx=142135.5,Om=0.2726,Lam=0.7274,ho=0.704,cam=0,vx=[-0.7156755,-0.5130859,0.4738687],vy=[0.6984330,-0.5257526,0.4855672],vz=[0.0000000,0.6784741,0.7346244],base_name='artsp8-',typef1="MaNGA",id1='A2-0',psf=0,redo=0,SN=15.0,Fluxm=20.0,dir1='',file_red="sp8/star_out_0.dat",file_gas="sp8/Gas_out_0.dat",file_out='mock_mass_ill_0.out',file_out_f='mock_mass_ill.out'):
     sig=2.5
     thet=0.0
     plots=1
@@ -4947,14 +4947,14 @@ def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/t
     cam=-cam
     if fov_p == 0:
         fov_p=np.round(rx/np.abs(cam)*91.0)
-    if fov_m == 0:
-        fov_m=np.round(rx/np.abs(cam)*62.0)#30
+    if fov == 0:
+        fov=np.round(rx/np.abs(cam)*62.0)#30
     if "CALIFA" in typef1:
         fib_n=11
     elif "MUSE" in typef1:
         scp_s=300.0
         fibA=150.0
-        fib_n=int(fov_m*scp_s/fibA/2)+1
+        fib_n=int(fov*scp_s/fibA/2)+1
     ns=str(int(3*fib_n*(fib_n-1)+1))
     id1t=id1.split('-')
     if len(id1t) == 1:
