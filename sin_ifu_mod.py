@@ -1885,6 +1885,7 @@ def photo_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s
     fibB=120.
     leng_s=0.5#kpc
     scalep=2.0/fibB
+    seeing=sig    
     cosmo = {'omega_M_0' : Om, 'omega_lambda_0' : Lam, 'h' : ho}
     cosmo = cd.set_omega_k_0(cosmo)
     cam=cd.comoving_distance(red_0, **cosmo)*1e3
@@ -1908,12 +1909,12 @@ def photo_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s
     radL_g=np.array(rad_g*(1+reds_g)*(3.08567758e19*100))
     phi=np.arcsin(x/radA)
     the=np.arcsin(y/(radA*np.cos(phi)))
-    the=the*180/np.pi*3600+ran.randn(len(rad))*1.43#/2.0
-    phi=phi*180/np.pi*3600+ran.randn(len(rad))*1.43#/2.0
+    the=the*180/np.pi*3600+ran.randn(len(rad))*seeing#/2.0
+    phi=phi*180/np.pi*3600+ran.randn(len(rad))*seeing#/2.0
     phi_g=np.arcsin(x_g/radA_g)
     the_g=np.arcsin(y_g/(radA_g*np.cos(phi_g)))
-    the_g=the_g*180/np.pi*3600+ran.randn(len(rad_g))*1.43#/2.0
-    phi_g=phi_g*180/np.pi*3600+ran.randn(len(rad_g))*1.43#/2.0
+    the_g=the_g*180/np.pi*3600+ran.randn(len(rad_g))*seeing#/2.0
+    phi_g=phi_g*180/np.pi*3600+ran.randn(len(rad_g))*seeing#/2.0
 #    print np.amax(phi),np.amin(np.abs(phi))
 #    print np.amax(x),np.amin(np.abs(x))
 #    sys.exit()
@@ -4936,7 +4937,6 @@ def mock_test(fib_n,typef1="MaNGA",id1='A2-0',psf=0,dir1=''):
 
 
 def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/templete_gas.fits",template_3="libs/templete_bc03_5.fits",template="libs/templete_bc03_2.fits",n_pix=440,fov_p=0,fov=0,rx=142135.5,Om=0.2726,Lam=0.7274,ho=0.704,cam=0,vx=[-0.7156755,-0.5130859,0.4738687],vy=[0.6984330,-0.5257526,0.4855672],vz=[0.0000000,0.6784741,0.7346244],base_name='artsp8-',typef1="MaNGA",id1='A2-0',psf=0,redo=0,SN=15.0,Fluxm=20.0,dir1='',file_red="sp8/star_out_0.dat",file_gas="sp8/Gas_out_0.dat",file_out='mock_mass_ill_0.out',file_out_f='mock_mass_ill.out'):
-    sig=2.5
     thet=0.0
     plots=1
     nl=110
@@ -4949,6 +4949,26 @@ def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/t
         fov_p=np.round(rx/np.abs(cam)*91.0)
     if fov == 0:
         fov=np.round(rx/np.abs(cam)*62.0)#30
+    if "MaNGA" in typef1:
+        if psf <= 0:
+            sig=1.43
+        else:
+            sig=psf
+    elif "CALIFA" in typef1:
+        if psf <= 0:
+            sig=0.7
+        else:
+            sig=psf
+    elif "MUSE" in typef1:
+        if psf <= 0:
+            sig=0.6
+        else:
+            sig=psf
+    else:
+        if psf == 0:
+            sig=1.43
+        else:
+            sig=psf  
     if "CALIFA" in typef1:
         fib_n=11
     elif "MUSE" in typef1:
