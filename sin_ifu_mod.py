@@ -1357,7 +1357,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     nw_g=len(wave_g)
     spec_ifu=np.zeros([nw,ndt*ns])
     spec_ifu_e=np.zeros([nw,ndt*ns])
-    spec_val=np.zeros([30,ndt*ns])
+    spec_val=np.zeros([33,ndt*ns])
     n_ages=num_ages(age_ssp3)
     ages_r=arg_ages(age_ssp3)
     sim_imag=np.zeros([n_ages,ndt*ns])
@@ -1421,6 +1421,9 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             wf_tg=[]
             va_1=[]
             va_1g=[]
+            Mft=0
+            age_flux=0
+            age_Mflux=0
 #            noise2=t_noise/s_nr
 #            plt.plot(wave_f,np.abs(noise*16.0))
 #            plt.plot(wave_f,np.abs(noise2*16.0))
@@ -1444,7 +1447,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                     else:#DECOMENTAR
                         Av=0#DECOMENTAR
                     #Av=0#COMENTAR
-                    Av_s=Av+Av_s
+                    Av_s=10**(-0.4*Av)+Av_s
                     if np.isnan(in_ssp[nt[k]]):
                         spect=spect
                     else:
@@ -1461,10 +1464,14 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                             met_ligt=np.log10(met_s[nt[k]])*mass_s[nt[k]]/ml_ssp[in_ssp[nt[k]]]+met_ligt
                             met_mas=np.log10(met_s[nt[k]])*mass_s[nt[k]]+met_mas
                             age_ligt=np.log10(age_s[nt[k]])*mass_s[nt[k]]/ml_ssp[in_ssp[nt[k]]]+age_ligt
-                            age_mas=np.log10(age_s[nt[k]])*mass_s[nt[k]]+age_mas
+                            age_mas=np.log10(age_s[nt[k]])*mass_s[nt[k]]+age_mas                            
                             #if Av > 0:
                             ft_w=mass_s[nt[k]]/ml_ssp[in_ssp[nt[k]]]*3.846e33/(4.0*np.pi*radL[nt[k]]**2.0)/1e-16*10**(-0.4*Av*0.44)
                             lt_w=mass_s[nt[k]]/ml_ssp[in_ssp[nt[k]]]
+                            fm_w=mass_s[nt[k]]*10**(-0.4*Av*0.44)
+                            Mft=Mft+fm_w
+                            age_flux=np.log10(age_s[nt[k]])*ft_w+age_flux
+                            age_Mflux=np.log10(age_s[nt[k]])*fm_w+age_Mflux
                             Ve_ligt=v_rad[nt[k]]*lt_w+Ve_ligt
                             Ve_flux=v_rad[nt[k]]*ft_w+Ve_flux
                             Av_ligt=10**(-0.4*Av)*lt_w+Av_ligt
@@ -1483,6 +1490,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                 if Lt > 0:
                     met_ligt=10.0**(met_ligt/Lt)
                     age_ligt=10.0**(age_ligt/Lt)
+                    age_flux=10.0**(age_flux/Ft)
+                    age_Mflux=10.0**(age_Mflux/Mft)
                     Av_ligt=(Av_ligt/Lt)
                     Av_flux=(Av_flux/Ft)
                     Ve_ligt=(Ve_ligt/Lt)
@@ -1594,7 +1603,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             spec_val[1,con]=mass_t*facto
             spec_val[2,con]=vel_t#*facto
             spec_val[3,con]=sfr_t*facto
-            spec_val[5,con]=spec_val[0,con]+spec_val[4,con]
+            spec_val[5,con]=spec_val[0,con]*0+spec_val[4,con]
             spec_val[7,con]=sve_t
             spec_val[8,con]=ml_t#*facto
             spec_val[10,con]=Lt*facto
@@ -1618,6 +1627,9 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             spec_val[27,con]=Sig_flux_g
             spec_val[28,con]=Ftg*facto
             spec_val[29,con]=Ltg*facto
+            spec_val[30,con]=Mft*facto
+            spec_val[31,con]=age_flux
+            spec_val[32,con]=age_Mflux
             #+ran.randn(nw)*np.median(spect)*0.05
             x_ifu[con]=xo
             y_ifu[con]=yo
@@ -1628,7 +1640,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     ifu_e=np.ones([nw,nl,nl])
     ifu_1=np.ones([nw,nl,nl])
     ifu_m=np.zeros([nw,nl,nl])
-    ifu_v=np.zeros([30,nl,nl])
+    ifu_v=np.zeros([33,nl,nl])
     ifu_a=np.zeros([n_ages,nl,nl])
     xo=-nl/2*pix_s
     yo=-nl/2*pix_s
@@ -1648,7 +1660,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             yf=yf+pix_s
             spt_new=np.zeros(nw)
             spt_err=np.zeros(nw)
-            spt_val=np.zeros(30)
+            spt_val=np.zeros(33)
             spt_mas=np.zeros(n_ages)
             Wgt=0
             for k in range(0, len(x_ifu)):
@@ -1741,7 +1753,9 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     dir_o1=dir_o.replace(" ","\ ")
     out_fit1=dir_o1+outf+'.fits'
     sycall('gzip  '+out_fit1)
+    ifu_v[0,:,:]=-2.5*np.log10(ifu_v[0,:,:]+0.0001)
     ifu_v[1,:,:]=np.log10(ifu_v[1,:,:]+1.0)
+    ifu_v[30,:,:]=np.log10(ifu_v[30,:,:]+1.0)
     ifu_v[10,:,:]=np.log10(ifu_v[10,:,:]+1.0)
     ifu_v[29,:,:]=np.log10(ifu_v[29,:,:]+1.0)
     ifu_v[15,:,:]=-2.5*np.log10(ifu_v[15,:,:]+0.0001)
@@ -1749,7 +1763,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h1t=pyf.PrimaryHDU(ifu_v)
     h=h1t.header
     h["NAXIS"]=3
-    h["NAXIS3"]=30
+    h["NAXIS3"]=33
     h["NAXIS1"]=nl
     h["NAXIS2"]=nl
     h["COMMENT"]="Real Values "+ifutype+" IFU"
@@ -1765,16 +1779,16 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h["CTYPE2"]='DEC--TAN'
     h['CUNIT1']='deg     '                                           
     h['CUNIT2']='deg     '
-    h['Type0']=('DUST_S  ','Av')
+    h['Type0']=('Av_T    ','Mag')
     h['Type1']=('MASS    ','log10(Msun)')
     h['Type2']=('VEL     ','km/s')
     h['Type3']=('SFR     ','Msun/yr')
-    h['Type4']=('DUST_G  ','Av')
-    h['Type5']=('DUST_T  ','Av')
-    h['Type6']=('DUST_Av ','Av')
+    h['Type4']=('DUST_G  ','Av BETA')
+    h['Type5']=('DUST_T  ','Av BETA')
+    h['Type6']=('DUST_Av ','Av BETA')
     h['Type7']=('DISP    ','km/s')
-    h['Type8']=('aML     ','Msun/Lsun')
-    h['Type9']= ('tML     ','Msun/Lsun')
+    h['Type8']=('aML     ','Msun/Lsun BETA')
+    h['Type9']= ('tML     ','Msun/Lsun BETA')
     h['Type10']=('LUM     ','log10(Lsun)')
     h['Type11']=('Z_lw    ','Z/H')
     h['Type12']=('Z_mw    ','Z/H')
@@ -1795,6 +1809,9 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['Type27']=('DIS_f_gas','km/s BETA')
     h['Type28']=('FLUX_gas','1e-16 ergs/s/cm2 Bolometric')
     h['Type29']=('LUM_gas ','log10(Lsun) Bolometric')
+    h['Type30']=('MASS_fw ','log10(Msun)')
+    h['Type31']=('AGE_fw  ','Gyr')
+    h['Type32']=('AGE_mfw ','Gyr BETA')
     h['RADECSYS']='ICRS    '
     h['SYSTEM']='FK5     '
     h['EQUINOX']=2000.00
