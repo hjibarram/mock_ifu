@@ -12,6 +12,8 @@ fib_n      7
 SN         15.0
 Fluxm      26.83
 psf        1.43
+sp_res     2000.0
+sp_samp    1.25
 fov_p      0
 fov        0
 cam        0

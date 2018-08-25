@@ -1181,7 +1181,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
         else:
             seeing=psfi
         if sp_res <=0:
-            sp_res=1200.0
+            sp_res=1700.0
     elif "MUSE" in ifutype:
         pix_s=0.2#0.1#0.025#arcsec
         scp_s=300.0#150.0#300.0#1200.0#microns per arcsec
@@ -1367,7 +1367,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     nw_g=len(wave_g)
     spec_ifu=np.zeros([nw,ndt*ns])
     spec_ifu_e=np.zeros([nw,ndt*ns])
-    spec_val=np.zeros([33,ndt*ns])
+    spec_val=np.zeros([35,ndt*ns])
     n_ages=num_ages(age_ssp3)
     ages_r=arg_ages(age_ssp3)
     sim_imag=np.zeros([n_ages,ndt*ns])
@@ -1434,6 +1434,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             Mft=0
             age_flux=0
             age_Mflux=0
+            met_ligt_g=0
+            met_flux_g=0
 #            noise2=t_noise/s_nr
 #            plt.plot(wave_f,np.abs(noise*16.0))
 #            plt.plot(wave_f,np.abs(noise2*16.0))
@@ -1561,6 +1563,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                                 Veg_flux=v_rad_g[nt_g[k]]*ft_wg+Veg_flux
                                 Avg_ligt=10**(-0.4*Av)*lt_wg+Avg_ligt
                                 Avg_flux=10**(-0.4*Av)*ft_wg+Avg_flux
+                                met_ligt_g=np.log10(met_g[nt_g[k]])*lt_wg+met_ligt_g   
+                                met_flux_g=np.log10(met_g[nt_g[k]])*lt_wg+met_flux_g                    
                                 spect_sfg=spect_sfg+ran.randn(nw_g)*np.median(spect_sfg)*0.01
                                 spect_g=spect_sfg+spect_g    
                                 va_1g.extend([v_rad_g[nt_g[k]]])
@@ -1592,6 +1596,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                     Avg_flux=(Avg_flux/Ftg)
                     Veg_ligt=(Veg_ligt/Ltg)
                     Veg_flux=(Veg_flux/Ftg)
+                    met_ligt_g=10.0**(met_ligt_g/Ltg)
+                    met_flux_g=10.0**(met_flux_g/Ftg)
                     va_1g=np.array(va_1g)
                     wf_tg=np.array(wf_tg)
                     wl_tg=np.array(wl_tg)
@@ -1642,6 +1648,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             spec_val[30,con]=Mft*facto
             spec_val[31,con]=age_flux
             spec_val[32,con]=age_Mflux
+            spec_val[33,con]=met_ligt_g
+            spec_val[34,con]=met_flux_g
             #+ran.randn(nw)*np.median(spect)*0.05
             x_ifu[con]=xo
             y_ifu[con]=yo
@@ -1652,7 +1660,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     ifu_e=np.ones([nw,nl,nl])
     ifu_1=np.ones([nw,nl,nl])
     ifu_m=np.zeros([nw,nl,nl])
-    ifu_v=np.zeros([33,nl,nl])
+    ifu_v=np.zeros([35,nl,nl])
     ifu_a=np.zeros([n_ages,nl,nl])
     xo=-nl/2*pix_s
     yo=-nl/2*pix_s
@@ -1672,7 +1680,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             yf=yf+pix_s
             spt_new=np.zeros(nw)
             spt_err=np.zeros(nw)
-            spt_val=np.zeros(33)
+            spt_val=np.zeros(35)
             spt_mas=np.zeros(n_ages)
             Wgt=0
             for k in range(0, len(x_ifu)):
@@ -1753,6 +1761,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['CAMY']=0
     h['CAMZ']=cam
     h['REDSHIFT']=float(red_0)
+    h['R']=(sp_res,'Spectral Resolution')
     h['H0']=ho
     h['Lambda_0']=Lam
     h['Omega_m']=Om
@@ -1775,7 +1784,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h1t=pyf.PrimaryHDU(ifu_v)
     h=h1t.header
     h["NAXIS"]=3
-    h["NAXIS3"]=33
+    h["NAXIS3"]=35
     h["NAXIS1"]=nl
     h["NAXIS2"]=nl
     h["COMMENT"]="Real Values "+ifutype+" IFU"
@@ -1824,15 +1833,18 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['Type30']=('MASS_fw ','log10(Msun)')
     h['Type31']=('AGE_fw  ','Gyr')
     h['Type32']=('AGE_mfw ','Gyr BETA')
+    h['Type33']=('Z_lw_gas ','Z/H')
+    h['Type34']=('Z_fw_gas ','Z/H')    
     h['RADECSYS']='ICRS    '
     h['SYSTEM']='FK5     '
     h['EQUINOX']=2000.00
-    h['PSF']=sig
+    h['PSF']=seeing
     h['FOV']=Rifu*2.0
     h['CAMX']=0
     h['CAMY']=0
     h['CAMZ']=cam
     h['REDSHIFT']=float(red_0)
+    h['R']=(sp_res,'Spectral Resolution')
     h['H0']=ho
     h['Lambda_0']=Lam
     h['Omega_m']=Om
@@ -1865,7 +1877,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['RADECSYS']='ICRS    '
     h['SYSTEM']='FK5     '
     h['EQUINOX']=2000.00
-    h['PSF']=sig
+    h['PSF']=seeing
     h['FOV']=Rifu*2.0
     h['CAMX']=0
     h['CAMY']=0
