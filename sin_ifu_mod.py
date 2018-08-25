@@ -1144,7 +1144,7 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
    
 
 
-def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=7,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="MaNGA"):
+def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,sp_samp=1.25,sp_res=0.0,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=7,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="MaNGA"):
     #if not "MaNGA" in ifutype or not "CALIFA" in ifutype or not "MUSE" in ifutype:
     #    ifutype="MaNGA"
     nh=dens#*1e10/(3.08567758e19*100)**3.0*1.9891e30/1.67262178e-27
@@ -1167,6 +1167,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             seeing=1.43
         else:
             seeing=psfi
+        if sp_res <=0:
+            sp_res=2000.0
     elif "CALIFA" in ifutype:
         pix_s=1.0#arcsec
         scp_s=56.02#microns per arcsec
@@ -1178,6 +1180,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             seeing=0.7
         else:
             seeing=psfi
+        if sp_res <=0:
+            sp_res=1200.0
     elif "MUSE" in ifutype:
         pix_s=0.2#0.1#0.025#arcsec
         scp_s=300.0#150.0#300.0#1200.0#microns per arcsec
@@ -1189,6 +1193,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             seeing=0.6
         else:
             seeing=psfi
+        if sp_res <=0:
+            sp_res=4000.0
     else:
         pix_s=0.5#arcsec
         scp_s=60.4#microns per arcsec
@@ -1198,7 +1204,11 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
         if psfi == 0:
             seeing=1.43
         else:
-            seeing=psfi           
+            seeing=psfi   
+        if sp_res <=0:
+            sp_res=2000.0       
+    if sp_samp <= 0:
+        sp_samp=5000./sp_res/2.0
     scalep=1.0/scp_s#2.0/fibB
     cosmo = {'omega_M_0' : Om, 'omega_lambda_0' : Lam, 'h' : ho}
     cosmo = cd.set_omega_k_0(cosmo)
@@ -1339,7 +1349,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     in_gas=asosiate_gas(gas_template,wave_g,pht_gas,met_gas,den_gas,tem_gas,ha_gas,pht_g,met_g,nh,temp_g)
     dust_rat_ssp=A_l(3.1,wave)
     dust_rat_gas=A_l(3.1,wave_g)
-    cdelt_w=1.25
+    cdelt_w=sp_samp
     crval_w=3622.0
     crpix_w=1
     wave_f=np.arange(crval_w,10352.0,cdelt_w)
@@ -1505,7 +1515,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                     Sig_ligt=np.sqrt(np.nansum(np.abs(wl_t)*(Ve_ligt-va_1)**2.0)/(np.nansum(np.abs(wl_t))-np.nansum(wl_t**2.0)/np.nansum(np.abs(wl_t))))
                 spect_t[np.isnan(spect_t)]=0
                 spect_i=inst_disp(wave,spect_t,sigma_inst)
-                spect=interp1d(wave,spect_i,bounds_error=False,fill_value=0.)(wave_f)
+                spect_ii=spec_resol(wave,spect_i,sp_res)
+                spect=interp1d(wave,spect_ii,bounds_error=False,fill_value=0.)(wave_f)
                 spect[np.isnan(spect)]=0
                 spec_val[0,con]=Av_s/len(nt)#*facto
 #                if j == 5:
@@ -1590,7 +1601,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                 spec_val[4,con]=Av_sg/len(nt_g)
                 spect_g[np.isnan(spect_g)]=0
                 spect_g_i=inst_disp(wave_g,spect_g,sigma_inst)
-                spect_gf=interp1d(wave_g,spect_g_i,bounds_error=False,fill_value=0.)(wave_f)
+                spect__g_ii=spec_resol(wave_g,spect_g_i,sp_res)
+                spect_gf=interp1d(wave_g,spect_g_ii,bounds_error=False,fill_value=0.)(wave_f)
                 spect_gf[np.isnan(spect_gf)]=0
                 #plt.plot(wave_f,spect_gf+spect)
                 #plt.show()
@@ -1803,8 +1815,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['Type21']=('DIS_fw   ','km/s BETA')
     h['Type22']=('Av_lw_g  ','Mag')
     h['Type23']=('Av_fw_g  ','Mag')
-    h['Type24']=('VEL_mw   ','km/s')
-    h['Type25']=('VEL_lw   ','km/s')
+    h['Type24']=('VEL_lw_g ','km/s')
+    h['Type25']=('VEL_fw_g ','km/s')
     h['Type26']=('DIS_l_gas','km/s BETA')
     h['Type27']=('DIS_f_gas','km/s BETA')
     h['Type28']=('FLUX_gas','1e-16 ergs/s/cm2 Bolometric')
@@ -2758,6 +2770,28 @@ def inst_disp(pdl_lamb,pdl_flux,sigma_inst):
     else:
         pdl_flux_conv_inst=pdl_flux
     return pdl_flux_conv_inst
+
+def spec_resol(pdl_lamb,pdl_flux,R):
+    vel_light=299792.458
+    dl=5500.0/R
+    sigma=dl#sigma_inst/vel_light*5000.0
+    dpix=pdl_lamb[1]-pdl_lamb[2]
+    rsigma=sigma/dpix
+    if sigma > 0.1:
+        box=int(3.0*rsigma*2.0)
+        if box < 3:
+            box=3
+        kernel=np.zeros(2*box+1)
+        norm=0
+        for j in range(0, 2*box+1):
+            gaus=np.exp(-0.5*(((j-box)/rsigma)**2.0))    
+            kernel[j]=gaus
+            norm=norm+gaus
+        kernel=kernel/norm
+        pdl_flux_conv_inst = convolve1d(pdl_flux,kernel)#,mode='same')
+    else:
+        pdl_flux_conv_inst=pdl_flux
+    return pdl_flux_conv_inst
      
 def shifts(spect_s,wave,dlam):
     wave_f=wave*dlam
@@ -3275,7 +3309,7 @@ def mock_halo_test(idh,basename='artsp8-',dir1='',fib_n=7,psf=0,nl=110,fov=30.0,
     cube_conv_t(cubef,psfi=psf,dir_o=dir1,nl=fib_n,fov=fov,thet=thet,ifutype=ifutype)
     sycall('cp '+dir1n+cubef+'.fits.gz '+dirf)
                  
-def mock_halo(idh,basename='artsp8-',template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",file=file,file2='',dir1='',fib_n=7,psf=0,ho=0.704,Lam=0.7274,SN=15.0,Fluxm=20.0,Om=0.2726,nl=110,fov=30.0,fov1=0.2,sig=2.5,thet=0.0,plots=1,rx=[0,0.5,1.0,2.0],observer=[0,0,0],ifutype="MaNGA"):
+def mock_halo(idh,sp_res=0.0,sp_samp=1.25,basename='artsp8-',template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",file=file,file2='',dir1='',fib_n=7,psf=0,ho=0.704,Lam=0.7274,SN=15.0,Fluxm=20.0,Om=0.2726,nl=110,fov=30.0,fov1=0.2,sig=2.5,thet=0.0,plots=1,rx=[0,0.5,1.0,2.0],observer=[0,0,0],ifutype="MaNGA"):
     #if not "CALIFA" in ifutype or not "MaNGA" in ifutype or not "MUSE" in ifutype:
     #    ifutype="MaNGA"
     dir1t=dir1.replace(' ','\ ')
@@ -3388,7 +3422,7 @@ def mock_halo(idh,basename='artsp8-',template3="../home/sanchez/ppak/legacy/gsd6
     [age_F,ind]=ages_definition(age_s,n_ages=55)
     dir1n=dir1.replace(" ","\ ")
     if ptt.exists(dir1+cubef+'.fits.gz') == False:
-        cube_conv(cubef,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,meta,mass,meta_g,volm,dens,sfri,temp_g,Av_g,mass_g,template3=template3,template5=template5,template2=template2,psfi=psf,SNi=SN,Flux_m=Fluxm,dir_o=dir1,red_0=red_0,ho=ho,Lam=Lam,Om=Om,nl=fib_n,fov=fov,sig=sig,thet=thet,ifutype=ifutype)
+        cube_conv(cubef,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,meta,mass,meta_g,volm,dens,sfri,temp_g,Av_g,mass_g,sp_res=sp_res,sp_samp=sp_samp,template3=template3,template5=template5,template2=template2,psfi=psf,SNi=SN,Flux_m=Fluxm,dir_o=dir1,red_0=red_0,ho=ho,Lam=Lam,Om=Om,nl=fib_n,fov=fov,sig=sig,thet=thet,ifutype=ifutype)
         sycall('cp '+dir1n+cubef+'.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val_mass_t.fits.gz '+dirf)
@@ -4936,7 +4970,7 @@ def mock_test(fib_n,typef1="MaNGA",id1='A2-0',psf=0,dir1=''):
     
 
 
-def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/templete_gas.fits",template_3="libs/templete_bc03_5.fits",template="libs/templete_bc03_2.fits",n_pix=440,fov_p=0,fov=0,rx=142135.5,Om=0.2726,Lam=0.7274,ho=0.704,cam=0,vx=[-0.7156755,-0.5130859,0.4738687],vy=[0.6984330,-0.5257526,0.4855672],vz=[0.0000000,0.6784741,0.7346244],base_name='artsp8-',typef1="MaNGA",id1='A2-0',psf=0,redo=0,SN=15.0,Fluxm=20.0,dir1='',file_red="sp8/star_out_0.dat",file_gas="sp8/Gas_out_0.dat",file_out='mock_mass_ill_0.out',file_out_f='mock_mass_ill.out'):
+def mock_sp(fib_n,ang,sp_res=2000.0,sp_samp=1.25,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/templete_gas.fits",template_3="libs/templete_bc03_5.fits",template="libs/templete_bc03_2.fits",n_pix=440,fov_p=0,fov=0,rx=142135.5,Om=0.2726,Lam=0.7274,ho=0.704,cam=0,vx=[-0.7156755,-0.5130859,0.4738687],vy=[0.6984330,-0.5257526,0.4855672],vz=[0.0000000,0.6784741,0.7346244],base_name='artsp8-',typef1="MaNGA",id1='A2-0',psf=0,redo=0,SN=15.0,Fluxm=20.0,dir1='',file_red="sp8/star_out_0.dat",file_gas="sp8/Gas_out_0.dat",file_out='mock_mass_ill_0.out',file_out_f='mock_mass_ill.out'):
     thet=0.0
     plots=1
     nl=110
@@ -5003,14 +5037,14 @@ def mock_sp(fib_n,ang,modt=0,template_1="libs/gsd61_156.fits",template_2="libs/t
         mock_photosimextgas(id1,basename=base_name,file=file_red,template2=template_2,template=template,file2=file_gas,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=n_pix,fov=fov_p,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1)
         mock_photo(id1,basename=base_name,file=file_red,template2=template_2,template=template,file2=file_gas,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=n_pix,fov=fov_p,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1)
         mock_sim(id1,basename=base_name,file=file_red,template2=template,template=template_1,file2=file_gas,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=n_pix,fov=fov_p,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1)
-        mock_halo(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
+        mock_halo(id1,sp_res=sp_res,sp_samp=sp_samp,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
         mock_halo_s(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype='SDSS')
     if modt == 1:
         mock_photo(id1,basename=base_name,file=file_red,template2=template_2,template=template,file2=file_gas,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=n_pix,fov=fov_p,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1)
-        mock_halo(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
+        mock_halo(id1,sp_res=sp_res,sp_samp=sp_samp,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
         mock_halo_s(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype='SDSS')
     if modt == 2:
-        mock_halo(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
+        mock_halo(id1,sp_res=sp_res,sp_samp=sp_samp,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
     if modt == 3:
         mock_halo_s(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype='SDSS')
     #fit3d(name,fo,fot_par,dir2=dir1,reens=1)#,redo=1)

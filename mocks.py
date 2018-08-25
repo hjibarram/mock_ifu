@@ -214,36 +214,64 @@ if len(sys.argv) >= 4:
             SN=15.0
             Fluxm=26.83
             psf=1.43
+            sp_res=2000.0
+            sp_samp=1.25
     if len(var3) == 2:
         fib_n=np.int(var3[0])
         ang=np.float(var3[1])
         SN=15.0
         Fluxm=26.83
         psf=1.43
+        sp_res=2000.0
+        sp_samp=1.25
     if len(var3) == 3:
         fib_n=np.int(var3[0])
         ang=np.float(var3[1])
         SN=np.float(var3[2])
         Fluxm=26.83
         psf=1.43
+        sp_res=2000.0
+        sp_samp=1.25
     if len(var3) == 4:
         fib_n=np.int(var3[0])
         ang=np.float(var3[1])
         SN=np.float(var3[2])
         Fluxm=np.float(var3[3])
         psf=1.43
+        sp_res=2000.0
+        sp_samp=1.25
     if len(var3) == 5:   
         fib_n=np.int(var3[0])
         ang=np.float(var3[1])
         SN=np.float(var3[2])
         Fluxm=np.float(var3[3])
         psf=np.float(var3[4])
+        sp_res=2000.0
+        sp_samp=1.25
+    if len(var3) == 6:   
+        fib_n=np.int(var3[0])
+        ang=np.float(var3[1])
+        SN=np.float(var3[2])
+        Fluxm=np.float(var3[3])
+        psf=np.float(var3[4])
+        sp_res=np.float(var3[5])
+        sp_samp=1.25
+    if len(var3) == 7:   
+        fib_n=np.int(var3[0])
+        ang=np.float(var3[1])
+        SN=np.float(var3[2])
+        Fluxm=np.float(var3[3])
+        psf=np.float(var3[4])
+        sp_res=np.float(var3[5])
+        sp_samp=np.float(var3[6])
 else:
     ang=0.0
     fib_n=7
     SN=15.0
     Fluxm=26.83
     psf=1.43
+    sp_res=2000.0
+    sp_samp=1.25
 if len(sys.argv) >= 5:
     var4=sys.argv[4].split(';')
     var4=filter(None,var4)
@@ -472,7 +500,9 @@ if conf_t == 1:
         k25=0
         k26=0
         k27=0
-        k28=0        
+        k28=0   
+        k29=0
+        k30=0     
         f=open(c_file,"r")
         for line in f:
             if not "#" in line:
@@ -580,6 +610,12 @@ if conf_t == 1:
                 if "redo" in data[0]:
                     redo=np.int(data[1])
                     k28=1
+                if "sp_res" in data[0]:
+                    sp_res=np.float(data[1])
+                    k29=1
+                if "sp_samp" in data[0]:
+                    sp_samp=np.float(data[1])
+                    k30=1
         f.close()
         if k1 == 0:
              basename='artsp8-'
@@ -636,10 +672,14 @@ if conf_t == 1:
         if k27 == 0:
             ho=0.704
         if k28 == 0:
-            redo=0   
+            redo=0  
+        if k29 == 0:
+            sp_res=2000.0
+        if k30 == 0:
+            sp_samp=0.0
     else:
         sifu.sycall("echo The configuration file does not exists")
         sys.exit()
 file_out='mock_mass_ill_0.out'
 file_out_f='mock_mass_ill.out'
-sifu.mock_sp(fib_n,ang,modt=modt,template_1=template_1,template_2=template_2,template_3=template_3,template=template_0,n_pix=n_pix,fov_p=fov_p,fov=fov,rx=rx,Om=Om,Lam=Lam,ho=ho,cam=cam,vx=vx,vy=vy,vz=vz,base_name=basename,typef1=typef1,id1=id1,psf=psf,redo=redo,SN=SN,Fluxm=Fluxm,dir1=dir1,file_red=file_red,file_gas=file_gas,file_out=file_out,file_out_f=file_out_f)
+sifu.mock_sp(fib_n,ang,modt=modt,template_1=template_1,template_2=template_2,template_3=template_3,template=template_0,n_pix=n_pix,fov_p=fov_p,fov=fov,rx=rx,Om=Om,Lam=Lam,ho=ho,cam=cam,vx=vx,vy=vy,vz=vz,base_name=basename,typef1=typef1,id1=id1,psf=psf,redo=redo,SN=SN,Fluxm=Fluxm,dir1=dir1,file_red=file_red,file_gas=file_gas,file_out=file_out,file_out_f=file_out_f,sp_res=sp_res,sp_samp=sp_samp,)
