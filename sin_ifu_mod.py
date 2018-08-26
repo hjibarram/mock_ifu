@@ -1564,7 +1564,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                                 Avg_ligt=10**(-0.4*Av)*lt_wg+Avg_ligt
                                 Avg_flux=10**(-0.4*Av)*ft_wg+Avg_flux
                                 met_ligt_g=np.log10(met_g[nt_g[k]])*lt_wg+met_ligt_g   
-                                met_flux_g=np.log10(met_g[nt_g[k]])*lt_wg+met_flux_g                    
+                                met_flux_g=np.log10(met_g[nt_g[k]])*ft_wg+met_flux_g                    
                                 spect_sfg=spect_sfg+ran.randn(nw_g)*np.median(spect_sfg)*0.01
                                 spect_g=spect_sfg+spect_g    
                                 va_1g.extend([v_rad_g[nt_g[k]]])
@@ -1607,7 +1607,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                 spec_val[4,con]=Av_sg/len(nt_g)
                 spect_g[np.isnan(spect_g)]=0
                 spect_g_i=inst_disp(wave_g,spect_g,sigma_inst)
-                spect__g_ii=spec_resol(wave_g,spect_g_i,sp_res)
+                spect_g_ii=spec_resol(wave_g,spect_g_i,sp_res)
                 spect_gf=interp1d(wave_g,spect_g_ii,bounds_error=False,fill_value=0.)(wave_f)
                 spect_gf[np.isnan(spect_gf)]=0
                 #plt.plot(wave_f,spect_gf+spect)
