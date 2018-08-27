@@ -798,7 +798,7 @@ def cube_conv_t(outf,dir_o='',psfi=0,nl=7,fov=30.0,thet=0.0,ifutype="MaNGA"):
     out_fit1=dir_o1+outf+'.fits'
     sycall('gzip  '+out_fit1)
     
-def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="SDSS"):
+def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,sp_res=0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="SDSS"):
     nh=dens
     fact=nh/10.0
     mass_gssp=sfri*100e6
@@ -816,6 +816,8 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
             seeing=1.43
         else:
             seeing=psfi
+        if sp_res <=0:
+            sp_res=2000.0
     elif "CALIFA" in ifutype:
         pix_s=1.0#arcsec
         scp_s=56.02#microns per arcsec
@@ -826,6 +828,8 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
             seeing=0.7
         else:
             seeing=psfi
+        if sp_res <=0:
+            sp_res=1700.0
     elif "MUSE" in ifutype:
         pix_s=0.2#0.1#0.025#arcsec
         scp_s=300.0#150.0#300.0#1200.0#microns per arcsec
@@ -836,6 +840,8 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
             seeing=0.6
         else:
             seeing=psfi
+        if sp_res <=0:
+            sp_res=4000.0
     else:
         pix_s=0.5#arcsec
         scp_s=60.4#microns per arcsec
@@ -845,7 +851,9 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
         if psfi == 0:
             seeing=1.43
         else:
-            seeing=psfi           
+            seeing=psfi
+        if sp_res <=0:
+            sp_res=2000.0           
     scalep=1.0/scp_s
     cosmo = {'omega_M_0' : Om, 'omega_lambda_0' : Lam, 'h' : ho}
     cosmo = cd.set_omega_k_0(cosmo)
@@ -981,7 +989,8 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
             age_mas=10.0**(age_mas/mass_t)
         spect_t[np.isnan(spect_t)]=0
         spect_i=inst_disp(wave,spect_t,sigma_inst)
-        spect=interp1d(wave,spect_i,bounds_error=False,fill_value=0.)(wave_f)
+        spect_ii=spec_resol(wave,spect_i,sp_res)
+        spect=interp1d(wave,spect_ii,bounds_error=False,fill_value=0.)(wave_f)
         spect[np.isnan(spect)]=0
         spec_val[0]=Av_s/len(nt)
     sycall('echo '+str(len(nt))+'  GAS')
@@ -1008,7 +1017,8 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
         spec_val[4]=Av_sg/len(nt_g)
         spect_g[np.isnan(spect_g)]=0
         spect_g_i=inst_disp(wave_g,spect_g,sigma_inst)
-        spect_gf=interp1d(wave_g,spect_g_i,bounds_error=False,fill_value=0.)(wave_f)
+        spect_g_ii=spec_resol(wave_g,spect_g_i,sp_res)
+        spect_gf=interp1d(wave_g,spect_g_ii,bounds_error=False,fill_value=0.)(wave_f)
         spect_gf[np.isnan(spect_gf)]=0
     spec_ifu=(spect_gf+spect+noise)
     spec_ifu_e=noise
@@ -1035,13 +1045,25 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
     ifu_v=np.zeros([18,1])
     ifu_a=np.zeros([n_ages,1])
 
-
+    max_val1=np.amax(spec_ifu)*1.25
+    matplotlib.use('agg')
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(8,5.5))
+    ax.set_ylim(0,max_val1)#0.75e-14)#
+    ax.set_xlabel("$Wavelength [A]$",fontsize=14)
+    ax.set_ylabel("Flux $[1E-16 erg/s/cm^2]$",fontsize=14)
+    plt.plot(wave_f,spec_ifu)
+    fig.tight_layout()
+    plt.savefig(dir_o+outf+'.pdf')
+    plt.close()
+    
 
     ifu[:,0]=spec_ifu
     ifu_v[:,0]=spec_val
     ifu_a[:,0]=sim_imag
     ifu_e[:,0]=spec_ifu_e
                 
+           
              
     h1=pyf.PrimaryHDU(ifu)#.header
     h2=pyf.ImageHDU(ifu_e)
@@ -2784,6 +2806,54 @@ def inst_disp(pdl_lamb,pdl_flux,sigma_inst):
     return pdl_flux_conv_inst
 
 def spec_resol(pdl_lamb,pdl_flux,R):
+    vel_light=299792.458
+    #dl=5500.0/R
+    #sigma=dl#sigma_inst/vel_light*5000.0
+    dpix=pdl_lamb[1]-pdl_lamb[2]
+    pdl_flux_conv_inst=np.zeros(len(pdl_lamb))
+    for i in range(0, len(pdl_lamb)):
+        sigma=pdl_lamb[i]/R
+        rsigma=sigma/dpix
+        if sigma > 0.1:
+            box=int(3.0*rsigma*2.0*10.0)
+            if box < 3:
+                box=3
+            nk=2*box+1
+            kernel=np.zeros(nk)
+            norm=0
+            for j in range(0, 2*box+1):
+                gaus=np.exp(-0.5*(((j-box)/rsigma)**2.0))    
+                kernel[j]=gaus
+                norm=norm+gaus
+            kernel=kernel/norm
+            if i < box:
+                kernel=kernel[box+i:nk]
+            if len(pdl_lamb)-1-i < box+1:
+                kernel=kernel[0:len(pdl_lamb)-i+box]
+            nlk=len(kernel)
+            if i < box:
+                pdl_flux_t=pdl_flux[0:nlk]
+                pdl_lamb_t=pdl_lamb[0:nlk]
+            elif len(pdl_lamb)-1-i < box+1:
+                pdl_flux_t=pdl_flux[i-box:len(pdl_lamb)]
+                pdl_lamb_t=pdl_lamb[i-box:len(pdl_lamb)]
+            else:
+                pdl_flux_t=pdl_flux[i-box:i-box+nlk]
+                pdl_lamb_t=pdl_lamb[i-box:i-box+nlk]
+            #print pdl_lamb_t.shape
+            #print kernel.shape
+            #print nlk
+            #print pdl_lamb_t[nlk-1]
+            pdl_flux_t=pdl_flux_t*kernel
+            val=simpson_r(pdl_flux_t,pdl_lamb_t,0,nlk-2)
+            #pdl_flux_conv_inst = convolve1d(pdl_flux,kernel)#,mode='same')
+        else:
+            val=pdl_flux[i]
+            #pdl_flux_conv_inst=pdl_flux
+        pdl_flux_conv_inst[i]=val
+    return pdl_flux_conv_inst
+
+def spec_resol_old(pdl_lamb,pdl_flux,R):
     vel_light=299792.458
     dl=5500.0/R
     sigma=dl#sigma_inst/vel_light*5000.0
