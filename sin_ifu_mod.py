@@ -801,6 +801,7 @@ def cube_conv_t(outf,dir_o='',psfi=0,nl=7,fov=30.0,thet=0.0,ifutype="MaNGA"):
 def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,sp_res=0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="SDSS"):
     nh=dens
     fact=nh/10.0
+    sfri=sfri+1e-6
     mass_gssp=sfri*100e6
     Rs=vol
     sup=4.0*np.pi*Rs**2.0
@@ -889,7 +890,9 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
     ml_ssp=1.0/ml_ssp
     [gas_template,wave_g,pht_gas,met_gas,den_gas,tem_gas,ha_gas,crval_g,cdelt_g,crpix_g]=gas_extract(template2)    
     in_ssp=asosiate_ssp(ssp_template,wave,age_ssp,met_ssp,ml_ssp,age_s,met_s)
-    pht_g =asosiate_pho(ssp_template,wave,age_ssp,met_ssp,ml_ssp,mass_gssp,met_g,Rs,nh)
+    pht_g=asosiate_pho(ssp_template,wave,age_ssp,met_ssp,ml_ssp,mass_gssp,met_g,Rs,nh)
+    #pht_g=asosiate_pho2(ssp_template,wave,age_ssp,met_ssp,ml_ssp,mass_s,met_s,age_s,x_g,y_g,z_g,x,y,z,Rs)
+    
     in_gas=asosiate_gas(gas_template,wave_g,pht_gas,met_gas,den_gas,tem_gas,ha_gas,pht_g,met_g,nh,temp_g)
     dust_rat_ssp=A_l(3.1,wave)
     dust_rat_gas=A_l(3.1,wave_g)
@@ -993,7 +996,7 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
         spect=interp1d(wave,spect_ii,bounds_error=False,fill_value=0.)(wave_f)
         spect[np.isnan(spect)]=0
         spec_val[0]=Av_s/len(nt)
-    sycall('echo '+str(len(nt))+'  GAS')
+    sycall('echo '+str(len(nt_g))+'  GAS')
     if len(nt_g) > 0:
         sfr_t=np.sum(sfri[nt_g])
         for k in range(0, len(nt_g)):
@@ -1171,6 +1174,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     #    ifutype="MaNGA"
     nh=dens#*1e10/(3.08567758e19*100)**3.0*1.9891e30/1.67262178e-27
     fact=nh/10.0
+    sfri=sfri+1e-6
     mass_gssp=sfri*100e6
     #print mass_gssp
     #print met_g
@@ -1351,6 +1355,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     [gas_template,wave_g,pht_gas,met_gas,den_gas,tem_gas,ha_gas,crval_g,cdelt_g,crpix_g]=gas_extract(template2)
     in_ssp=asosiate_ssp(ssp_template,wave,age_ssp,met_ssp,ml_ssp,age_s,met_s)
     pht_g =asosiate_pho(ssp_template,wave,age_ssp,met_ssp,ml_ssp,mass_gssp,met_g,Rs,nh)
+    #pht_g=asosiate_pho2(ssp_template,wave,age_ssp,met_ssp,ml_ssp,mass_s,met_s,age_s,x_g,y_g,z_g,x,y,z,Rs)
     #print np.amax(pht_g[np.where(np.log10(pht_g) != 0)[0]]),"Q(H) max"
     #print np.amin(pht_g[np.where(np.log10(pht_g) != 0)[0]]),"Q(H) min"
     #print np.amax(met_g)/0.02,"Z_g max"
@@ -1522,7 +1527,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                 ml_t=ml_t/len(nt)
                 ml_ts=mass_t/Lt
                 if Lt > 0:
-                    met_ligt=10.0**(met_ligt/Lt)
+                    #met_ligt=10.0**(met_ligt/Lt)
+                    met_ligt=met_ligt/Lt
                     age_ligt=10.0**(age_ligt/Lt)
                     age_flux=10.0**(age_flux/Ft)
                     age_Mflux=10.0**(age_Mflux/Mft)
@@ -1530,7 +1536,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                     Av_flux=(Av_flux/Ft)
                     Ve_ligt=(Ve_ligt/Lt)
                     Ve_flux=(Ve_flux/Ft)
-                    met_mas=10.0**(met_mas/mass_t)
+                    #met_mas=10.0**(met_mas/mass_t)
+                    met_mas=met_mas/mass_t
                     age_mas=10.0**(age_mas/mass_t)
                     va_1=np.array(va_1)
                     wf_t=np.array(wf_t)
@@ -1618,8 +1625,10 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                     Avg_flux=(Avg_flux/Ftg)
                     Veg_ligt=(Veg_ligt/Ltg)
                     Veg_flux=(Veg_flux/Ftg)
-                    met_ligt_g=10.0**(met_ligt_g/Ltg)
-                    met_flux_g=10.0**(met_flux_g/Ftg)
+                    #met_ligt_g=10.0**(met_ligt_g/Ltg)
+                    #met_flux_g=10.0**(met_flux_g/Ftg)
+                    met_ligt_g=met_ligt_g/Ltg
+                    met_flux_g=met_flux_g/Ftg
                     va_1g=np.array(va_1g)
                     wf_tg=np.array(wf_tg)
                     wl_tg=np.array(wl_tg)
@@ -1803,6 +1812,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     ifu_v[29,:,:]=np.log10(ifu_v[29,:,:]+1.0)
     ifu_v[15,:,:]=-2.5*np.log10(ifu_v[15,:,:]+0.0001)
     ifu_v[17,:,:]=-2.5*np.log10(ifu_v[17,:,:]+0.0001)
+    ifu_v[22,:,:]=-2.5*np.log10(ifu_v[22,:,:]+0.0001)
+    ifu_v[23,:,:]=-2.5*np.log10(ifu_v[23,:,:]+0.0001)
     h1t=pyf.PrimaryHDU(ifu_v)
     h=h1t.header
     h["NAXIS"]=3
@@ -1833,8 +1844,8 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['Type8']=('aML     ','Msun/Lsun BETA')
     h['Type9']= ('tML     ','Msun/Lsun BETA')
     h['Type10']=('LUM     ','log10(Lsun)')
-    h['Type11']=('Z_lw    ','Z/H')
-    h['Type12']=('Z_mw    ','Z/H')
+    h['Type11']=('Z_lw    ','log10(Z/H) add 1.77 to convert to log10(Z/Z_sun)')
+    h['Type12']=('Z_mw    ','log10(Z/H) add 1.77 to convert to log10(Z/Z_sun)')
     h['Type13']=('AGE_lw  ','Gyr')
     h['Type14']=('AGE_mw  ','Gyr')
     h['Type15']=('Av_lw   ','Mag')
@@ -1852,11 +1863,11 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     h['Type27']=('DIS_f_gas','km/s BETA')
     h['Type28']=('FLUX_gas','1e-16 ergs/s/cm2 Bolometric')
     h['Type29']=('LUM_gas ','log10(Lsun) Bolometric')
-    h['Type30']=('MASS_fw ','log10(Msun)')
+    h['Type30']=('MASS_fw ','log10(Msun) BETA')
     h['Type31']=('AGE_fw  ','Gyr')
     h['Type32']=('AGE_mfw ','Gyr BETA')
-    h['Type33']=('Z_lw_gas ','Z/H')
-    h['Type34']=('Z_fw_gas ','Z/H')    
+    h['Type33']=('Z_lw_gas ','log10(Z/H) add 10.46 to convert to 12+log10(O/H) or add 1.77 to convert to log10(Z/Z_sun)')
+    h['Type34']=('Z_fw_gas ','log10(Z/H) add 10.46 to convert to 12+log10(O/H) or add 1.77 to convert to log10(Z/Z_sun)')#8.69 
     h['RADECSYS']='ICRS    '
     h['SYSTEM']='FK5     '
     h['EQUINOX']=2000.00
@@ -1922,6 +1933,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
 def photo_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template2="templete_gas.fits",template="/home/hjibarram/FIT3D_py/Base_bc03/templete_bc03_2.fits",dir_o='',red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=200,fov=0.2,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],observer=[0,0,0]):
     nh=dens#*1e10/(3.08567758e19*100)**3.0*1.9891e30/1.67262178e-27
     fact=nh/10.0
+    sfri=sfri+1e-6
     mass_gssp=sfri*100e6
     Rs=vol#float_((vol/(4.0*np.pi/3.0))**(1./3.0)*(3.08567758e19*100))
     sup=4.0*np.pi*Rs**2.0#4.0*np.pi*(3.0*vol/4.0/np.pi)**(2.0/3.0)*(3.08567758e19*100)**2.0
@@ -2514,6 +2526,7 @@ def photosim_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mas
 def photosimextgas_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template2="templete_gas.fits",template="/home/hjibarram/FIT3D_py/Base_bc03/templete_bc03_2.fits",dir_o='',red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=200,fov=0.2,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],observer=[0,0,0]):
     nh=dens#*1e10/(3.08567758e19*100)**3.0*1.9891e30/1.67262178e-27
     fact=nh/10.0
+    sfri=sfri+1e-6
     mass_gssp=sfri*100e6
     Rs=vol#float_((vol/(4.0*np.pi/3.0))**(1./3.0)*(3.08567758e19*100))
     sup=4.0*np.pi*Rs**2.0#4.0*np.pi*(3.0*vol/4.0/np.pi)**(2.0/3.0)*(3.08567758e19*100)**2.0
@@ -2949,6 +2962,58 @@ def asosiate_gas(ssp_temp,wave,age_s,met_s,den_s,tem_s,ml_s,age,met,den,tem):
                                     #print tem[ind_age[i][ind_met[j][ind_den[k][ind_tem[h]]]]]
                                     #sys.exit()
     return ind_ssp
+
+def asosiate_pho2(ssp_temp,wave,age_s,met_s,ml,massp_s,metp_s,agep_s,x_g,y_g,z_g,x_s,y_s,z_s,R_g):  
+    mass=np.zeros(len(z_g))
+    met=np.zeros(len(z_g))
+    age=np.zeros(len(z_g))  
+    for i in range(0, len(z_g)):
+        r=np.sqrt((x_s-x_g[i])**2.0+(y_s-y_g[i])**2.0+(z_s-z_g[i])**2.0)
+        nt=np.where(r <= R_g[i])[0]
+        met[i]=np.nanmean(metp_s[nt])
+        age[i]=np.nanmean(agep_s[nt])
+        mass[i]=np.nansum(massp_s[nt])    
+    vel_light=299792458.0
+    h_p=6.62607004e-34
+    #age=np.ones(len(met))*2.5e6/1e9
+    age_a=[]
+    met_a=[]
+    nssp=len(met_s)
+    ban=0
+    ban1=0
+    age_t=sorted(age_s)
+    met_t=met_s
+    age_a.extend([age_t[0]])
+    met_a.extend([met_t[0]])
+    ind_ssp=np.zeros((len(age)),dtype=np.int)
+    photo=np.zeros(len(age))
+    ind_ssp[:]=-100
+    for i in range(1, nssp):
+        if age_t[i-1] > age_t[i]:
+            ban =1
+        if age_t[i-1] < age_t[i] and ban == 0:
+            age_a.extend([age_t[i]])
+        if met_t[i-1] > met_t[i]:
+                ban1 =1
+        if met_t[i-1] < met_t[i] and ban1 == 0:
+            met_a.extend([met_t[i]])
+    ind_age=ages_definition_l(age,age_a)
+    n_age=len(age_a)
+    n_met=len(met_a)
+    for i in range(0, n_age):
+        if len(ind_age[i]) > 0:
+            ind_met=met_definition_l(met[ind_age[i]],met_a)
+            for j in range(0, n_met):
+                if len(ind_met[j]) > 0:
+                    nt=np.where((age_s == age_a[i]) & (met_s == met_a[j]))[0]
+                    ind_ssp[ind_age[i][ind_met[j]]]=nt[0]
+                    flux_0=ssp_temp[nt[0],:]/ml[nt[0]]/(h_p*vel_light/wave/1e-10/1e-7)*3.846e33
+                    j1=0#int(0.47*n_c)
+                    j2=int(0.63*len(wave))
+                    norm=simpson_r(flux_0,wave,j1,j2)
+                    photo[ind_age[i][ind_met[j]]]=norm*mass[ind_age[i][ind_met[j]]]+1#/(4.0*np.pi*Rs[ind_age[i][ind_met[j]]]**2.0*n_h[ind_age[i][ind_met[j]]])+1
+    return np.log10(photo)
+
 
 def asosiate_pho(ssp_temp,wave,age_s,met_s,ml,mass,met,Rs,n_h):
     vel_light=299792458.0
@@ -3444,9 +3509,9 @@ def mock_halo(idh,sp_res=0.0,sp_samp=1.25,basename='artsp8-',template3="../home/
     vx=vx[nt]
     vy=vy[nt]
     vz=vz[nt]
-    mass_g=mass_g/ho
-    mass=mass[nt]/ho
-    mas0=mas0[nt]/ho
+    mass_g=mass_g#/ho
+    mass=mass[nt]#/ho
+    mas0=mas0[nt]#/ho
     meta=meta[nt]#/0.0127
     ages=ages[nt]
     dx_g=dx_g/ho
@@ -3571,9 +3636,9 @@ def mock_halo_s(idh,basename='artsp8-',template3="../home/sanchez/ppak/legacy/gs
     vx=vx[nt]
     vy=vy[nt]
     vz=vz[nt]
-    mass_g=mass_g/ho
-    mass=mass[nt]/ho
-    mas0=mas0[nt]/ho
+    mass_g=mass_g#/ho
+    mass=mass[nt]#/ho
+    mas0=mas0[nt]#/ho
     meta=meta[nt]#/0.0127
     ages=ages[nt]
     dx_g=dx_g/ho
@@ -3690,9 +3755,9 @@ def mock_photo(id,basename='artsp8-',template2="templete_gas.fits",template="/ho
         vx=vx[nt]
         vy=vy[nt]
         vz=vz[nt]
-        mass_g=mass_g/ho
-        mass=mass[nt]/ho
-        mas0=mas0[nt]/ho
+        mass_g=mass_g#/ho
+        mass=mass[nt]#/ho
+        mas0=mas0[nt]#/ho
         meta=meta[nt]#/0.0127
         ages=ages[nt]
         dx_g=dx_g/ho
@@ -3834,9 +3899,9 @@ def mock_sim(id,basename='artsp8-',template2="../../Base_bc03/templete_bc03_2.fi
         vx=vx[nt]
         vy=vy[nt]
         vz=vz[nt]
-        mass_g=mass_g/ho
-        mass=mass[nt]/ho
-        mas0=mas0[nt]/ho
+        mass_g=mass_g#/ho
+        mass=mass[nt]#/ho
+        mas0=mas0[nt]#/ho
         meta=meta[nt]#/0.0127
         ages=ages[nt]
         dx_g=dx_g/ho
@@ -3976,9 +4041,9 @@ def mock_photosim(id,basename='artsp8-',template="/home/hjibarram/FIT3D_py/Base_
         vx=vx[nt]
         vy=vy[nt]
         vz=vz[nt]
-        mass_g=mass_g/ho
-        mass=mass[nt]/ho
-        mas0=mas0[nt]/ho
+        mass_g=mass_g#/ho
+        mass=mass[nt]#/ho
+        mas0=mas0[nt]#/ho
         meta=meta[nt]#/0.0127
         ages=ages[nt]
         dx_g=dx_g/ho
@@ -4090,9 +4155,9 @@ def mock_photosimextgas(id,basename='artsp8-',template2="templete_gas.fits",temp
         vx=vx[nt]
         vy=vy[nt]
         vz=vz[nt]
-        mass_g=mass_g/ho
-        mass=mass[nt]/ho
-        mas0=mas0[nt]/ho
+        mass_g=mass_g#/ho
+        mass=mass[nt]#/ho
+        mas0=mas0[nt]#/ho
         meta=meta[nt]#/0.0127
         ages=ages[nt]
         dx_g=dx_g/ho
