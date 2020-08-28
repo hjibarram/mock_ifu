@@ -10,13 +10,16 @@ ADD . /
 
 # Install any needed packages specified in requirements.txt
 ENV PATH="$PATH:/root/.local/bin"
-RUN pip install --user numpy==1.11.2
+#RUN pip install --user numpy==1.11.2
+RUN pip install --user numpy==1.15.4
 RUN pip install --user scipy==0.13.3
 RUN pip install --user matplotlib
 RUN pip install --user astropy==1.0.3
 RUN pip install --user cosmolopy
 RUN pip install --user pyfits==3.3
 RUN pip install --user Pillow
+#RUN pip uninstall six
+RUN pip install --user --ignore-installed six
 #RUN pip install --user PIL  --allow-unverified PIL --allow-all-external
 #RUN pip install --trusted-host pypi.python.org -r requirements.txt
 

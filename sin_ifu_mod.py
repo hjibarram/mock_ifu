@@ -7,8 +7,6 @@ from numpy import absolute as abs
 from numpy import random as ran
 import time
 import os.path as ptt
-import h5py
-import illustris_python as il
 from scipy.interpolate.interpolate import interp1d
 import pyfits as pyf
 from pyfits import writeto as wfit
@@ -24,7 +22,20 @@ from astropy.units.equivalencies import spectral
 from astropy.io.fits.hdu.compressed import DITHER_SEED_CHECKSUM
 from scipy.ndimage.filters import convolve1d
 import warnings
-from illustris_python import lhalotree
+import imp
+try:
+    imp.find_module('illustris_python')
+    found_il = True
+    import illustris_python as il
+    from illustris_python import lhalotree
+except ImportError:
+    found_il = False
+try:
+    imp.find_module('h5py')
+    found_h5py = True
+    import h5py
+except ImportError:
+    found_h5py = False
 matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
@@ -3403,6 +3414,7 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
         spect_gf=interp1d(wave_g,spect_g_ii,bounds_error=False,fill_value=0.)(wave_f)
         spect_gf[np.isnan(spect_gf)]=0
     spec_ifu=(spect_gf+spect+noise)
+    spec_ifu_g=spect_gf
     spec_ifu_e=noise
     spec_val[1]=mass_t
     spec_val[2]=vel_t
@@ -3426,6 +3438,7 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
     ifu_m=np.zeros([nw,1])
     ifu_v=np.zeros([18,1])
     ifu_a=np.zeros([n_ages,1])
+    ifu_g=np.zeros([nw,1])
 
     max_val1=np.amax(spec_ifu)*1.25
     matplotlib.use('agg')
@@ -3544,11 +3557,39 @@ def fib_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,m
     dir_o1=dir_o.replace(" ","\ ")
     out_fit1=dir_o1+outf+'_val_mass_t.fits'
     sycall('gzip -f '+out_fit1)
+    ifu_g[:,0]=spec_ifu_g
+    h1_f=pyf.PrimaryHDU(ifu_g)#.header
+    h=h1_f.header
+    h["NAXIS"]=2 
+    h["NAXIS1"]=nw
+    h["NAXIS2"]=1
+    h["COMMENT"]="Mock "+ifutype+" single clean gas spectra"
+    h['CDELT1']=cdelt_w
+    h['CRPIX1']=crpix_w
+    h['CRVAL1']=crval_w
+    h['CUNIT1']='Wavelength [A]'
+    h['PSF']=seeing
+    h['DFIB']=Dfib
+    h['CAMX']=0
+    h['CAMY']=0
+    h['CAMZ']=cam
+    h['REDSHIFT']=float(red_0)
+    h['H0']=ho
+    h['Lambda_0']=Lam
+    h['Omega_m']=Om
+    h['UNITS']='1E-16 erg/s/cm^2'
+    hlist=pyf.HDUList([h1_f])
+    hlist.update_extend()
+    out_fit=dir_o+outf+'_clean_gas.fits'
+    wfits_ext(out_fit,hlist)
+    dir_o1=dir_o.replace(" ","\ ")
+    out_fit1=dir_o1+outf+'_clean_gas.fits'
+    sycall('gzip  '+out_fit1)
     
    
 
 
-def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,sp_samp=1.25,sp_res=0.0,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=7,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="MaNGA"):
+def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,sp_samp=1.25,sp_res=0.0,template3="../home/sanchez/ppak/legacy/gsd61_156.fits",template5="../../Base_bc03/templete_bc03_5.fits",template2="templete_gas.fits",dir_o='',Flux_m=20.0,psfi=0,SNi=15.0,red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=7,fov=30.0,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],ifutype="MaNGA",gas_only=False):
     #if not "MaNGA" in ifutype or not "CALIFA" in ifutype or not "MUSE" in ifutype:
     #    ifutype="MaNGA"
     nh=dens#*1e10/(3.08567758e19*100)**3.0*1.9891e30/1.67262178e-27
@@ -3778,6 +3819,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     spec_ifu=np.zeros([nw,ndt*ns])
     spec_ifu_e=np.zeros([nw,ndt*ns])
     spec_val=np.zeros([35,ndt*ns])
+    spec_ifu_g=np.zeros([nw,ndt*ns])
     n_ages=num_ages(age_ssp3)
     ages_r=arg_ages(age_ssp3)
     sim_imag=np.zeros([n_ages,ndt*ns])
@@ -4039,6 +4081,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             #spec_ifu[:,con]=np.sqrt((facto**2.0)*(spect_gf+spect)**2.0+noise**2.0)
             spec_ifu[:,con]=facto*(spect_gf+spect+noise)
             spec_ifu_e[:,con]=noise*facto
+            spec_ifu_g[:,con]=facto*(spect_gf)
             spec_val[1,con]=mass_t*facto
             spec_val[2,con]=vel_t#*facto
             spec_val[3,con]=sfr_t*facto
@@ -4083,6 +4126,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     ifu_m=np.zeros([nw,nl,nl])
     ifu_v=np.zeros([35,nl,nl])
     ifu_a=np.zeros([n_ages,nl,nl])
+    ifu_g=np.zeros([nw,nl,nl])
     xo=-nl/2*pix_s
     yo=-nl/2*pix_s
     print xo,yo
@@ -4103,6 +4147,7 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
             spt_err=np.zeros(nw)
             spt_val=np.zeros(35)
             spt_mas=np.zeros(n_ages)
+            spt_gas=np.zeros(nw)
             Wgt=0
             for k in range(0, len(x_ifu)):
                 V1=np.sqrt((x_ifu[k]-xi)**2.0+(y_ifu[k]-yf)**2.0)
@@ -4127,12 +4172,14 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
                     spt_err=(spec_ifu_e[:,k]*Wg)**2.0+spt_err**2.0
                     spt_val=spec_val[:,k]*Wg+spt_val
                     spt_mas=sim_imag[:,k]*Wg+spt_mas
+                    spt_gas=spec_ifu_g[:,k]*Wg+spt_gas
                     Wgt=Wgt+Wg
             if Wgt == 0:
                 Wgt=1
             ifu[:,j,i]=spt_new/Wgt
             ifu_v[:,j,i]=spt_val/Wgt
             ifu_a[:,j,i]=spt_mas/Wgt
+            ifu_g[:,j,i]=spt_gas/Wgt
             #ifu_imag[:,j,i]=spt_imag/Wgt
             if np.sum(np.sqrt(spt_err/Wgt**2.0)) == 0:
                 ifu_e[:,j,i]=1.0
@@ -4319,6 +4366,51 @@ def cube_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,
     dir_o1=dir_o.replace(" ","\ ")
     out_fit1=dir_o1+outf+'_val_mass_t.fits'
     sycall('gzip -f '+out_fit1)
+    h1_f=pyf.PrimaryHDU(ifu_g)#.header
+    h=h1_f.header
+    h["NAXIS"]=3
+    h["NAXIS3"]=nw 
+    h["NAXIS1"]=nl
+    h["NAXIS2"]=nl
+    h["COMMENT"]="Mock "+ifutype+" clean gas IFU"
+    h["CRVAL1"]=0
+    h["CD1_1"]=np.cos(thet*np.pi/180.)*pix_s/3600.
+    h["CD1_2"]=np.sin(thet*np.pi/180.)*pix_s/3600.
+    h["CRPIX1"]=nl/2
+    h["CTYPE1"]='RA---TAN'
+    h["CRVAL2"]=0
+    h["CD2_1"]=-np.sin(thet*np.pi/180.)*pix_s/3600.
+    h["CD2_2"]=np.cos(thet*np.pi/180.)*pix_s/3600.
+    h["CRPIX2"]=nl/2
+    h["CTYPE2"]='DEC--TAN'
+    h['CUNIT1']='deg     '                                           
+    h['CUNIT2']='deg     '
+    h['CDELT3']=cdelt_w
+    h['CRPIX3']=crpix_w
+    h['CRVAL3']=crval_w
+    h['CUNIT3']='Wavelength [A]'
+    h['RADECSYS']='ICRS    '
+    h['SYSTEM']='FK5     '
+    h['EQUINOX']=2000.00
+    h['PSF']=seeing
+    h['FOV']=Rifu*2.0
+    h['CAMX']=0
+    h['CAMY']=0
+    h['CAMZ']=cam
+    h['REDSHIFT']=float(red_0)
+    h['R']=(sp_res,'Spectral Resolution')
+    h['H0']=ho
+    h['Lambda_0']=Lam
+    h['Omega_m']=Om
+    h['IFUCON']=(str(np.int(ns))+' ','NFibers')
+    h['UNITS']='1E-16 erg/s/cm^2'
+    hlist=pyf.HDUList([h1_f])
+    hlist.update_extend()
+    out_fit=dir_o+outf+'_clean_gas.fits'
+    wfits_ext(out_fit,hlist)
+    dir_o1=dir_o.replace(" ","\ ")
+    out_fit1=dir_o1+outf+'_clean_gas.fits'
+    sycall('gzip  '+out_fit1)
     
 def photo_conv(outf,x,y,z,vx,vy,vz,x_g,y_g,z_g,vx_g,vy_g,vz_g,age_s,met_s,mass_s,met_g,vol,dens,sfri,temp_g,Av_g,mass_g,template2="templete_gas.fits",template="/home/hjibarram/FIT3D_py/Base_bc03/templete_bc03_2.fits",dir_o='',red_0=0.01,ho=0.704,Lam=0.7274,Om=0.2726,nl=200,fov=0.2,sig=2.5,thet=0.0,pdf=2,rx=[0,0.5,1.0,2.0],observer=[0,0,0]):
     nh=dens#*1e10/(3.08567758e19*100)**3.0*1.9891e30/1.67262178e-27
@@ -6756,6 +6848,7 @@ def mock_halo(idh,sp_res=0.0,sp_samp=1.25,basename='artsp8-',template3="../home/
         sycall('cp '+dir1n+cubef+'.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val_mass_t.fits.gz '+dirf)
+        sycall('cp '+dir1n+cubef+'_clean_gas.fits.gz '+dirf)
         #sys.exit()
         band_cube(cubef+'.fits.gz', dir='legacy/', dir1=dir1)
     else:
@@ -6763,6 +6856,7 @@ def mock_halo(idh,sp_res=0.0,sp_samp=1.25,basename='artsp8-',template3="../home/
         sycall('cp '+dir1n+cubef+'.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val_mass_t.fits.gz '+dirf)
+        sycall('cp '+dir1n+cubef+'_clean_gas.fits.gz '+dirf)
     sycall('mv *'+basename+id+'* '+dir1n)
         
 
@@ -6879,10 +6973,12 @@ def mock_halo_s(idh,basename='artsp8-',template3="../home/sanchez/ppak/legacy/gs
         sycall('cp '+dir1n+cubef+'.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val_mass_t.fits.gz '+dirf)
+        sycall('cp '+dir1n+cubef+'_clean_gas.fits.gz '+dirf)
     else:
         sycall('cp '+dir1n+cubef+'.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val.fits.gz '+dirf)
         sycall('cp '+dir1n+cubef+'_val_mass_t.fits.gz '+dirf)
+        sycall('cp '+dir1n+cubef+'_clean_gas.fits.gz '+dirf)
 
 def mock_photo(id,basename='artsp8-',template2="templete_gas.fits",template="/home/hjibarram/FIT3D_py/Base_bc03/templete_bc03_2.fits",dir1='',file=file,file2='',fib_n=7,ho=0.704,Lam=0.7274,Om=0.2726,nl=110,fov=0.2,fov1=0.2,sig=2.5,thet=0.0,plots=1,rx=[0,0.5,1.0,2.0],observer=[0,0,0]):
     dir1t=dir1.replace(' ','\ ')
@@ -8728,15 +8824,15 @@ def mock_sp(fib_n,ang,sp_res=2000.0,sp_samp=1.25,modt=0,template_1="libs/gsd61_1
         mock_sim(id1,basename=base_name,file=file_red,template2=template,template=template_1,file2=file_gas,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=n_pix,fov=fov_p,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1)
         mock_halo(id1,sp_res=sp_res,sp_samp=sp_samp,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
         mock_halo_s(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype='SDSS')
-        fit3d_only(name,dir_root=dir1,redo=1)#,redo=1)
+        #fit3d_only(name,dir_root=dir1,redo=1)#,redo=1)
     if modt == 1:
         mock_photo(id1,basename=base_name,file=file_red,template2=template_2,template=template,file2=file_gas,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=n_pix,fov=fov_p,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1)
         mock_halo(id1,sp_res=sp_res,sp_samp=sp_samp,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
         mock_halo_s(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype='SDSS')
-        fit3d_only(name,dir_root=dir1,redo=1)#,redo=1)
+        #fit3d_only(name,dir_root=dir1,redo=1)#,redo=1)
     if modt == 2:
         mock_halo(id1,sp_res=sp_res,sp_samp=sp_samp,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,fib_n=fib_n,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype=typef1)
-        fit3d_only(name,dir_root=dir1,redo=1)#,redo=1)
+        #fit3d_only(name,dir_root=dir1,redo=1)#,redo=1)
     if modt == 3:
         mock_halo_s(id1,basename=base_name,file=file_red,template3=template_1,template5=template_3,template2=template_2,file2=file_gas,SN=SN,psf=psf,Fluxm=Fluxm,dir1=dir1,ho=ho,Lam=Lam,Om=Om,nl=nl,fov=fov,fov1=fov1,sig=sig,thet=thet,plots=plots,rx=rads,observer=obs_ang1,ifutype='SDSS')
     if modt == 4:
